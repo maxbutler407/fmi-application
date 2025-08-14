@@ -1,6 +1,16 @@
 import "package:flutter/material.dart";
+import 'package:csv/csv.dart' as exportCSV;
 
-class _SurveyPageState extends State<SurveyPage> {
+
+
+class SurveyPage extends StatefulWidget {
+  const SurveyPage({super.key});
+
+  @override
+  SurveyPageState createState() => SurveyPageState();
+}
+
+class SurveyPageState extends State<SurveyPage> {
   final List<String> answers = [
     "Extremely sleepy, fighting sleep",
     "Sleepy, some effort to keep alert",
@@ -13,122 +23,54 @@ class _SurveyPageState extends State<SurveyPage> {
     "Extremely alert",
   ];
 
-  final _record = AudioRecorder();
-  bool isRecording = false;
-
   // ✅ This will hold your answer data in the desired format
   List<Map<String, dynamic>> associateList = [];
 
-  Future<String> getCsvPath() async {
-    final dir = await getApplicationDocumentsDirectory();
-    return "${dir.path}/survey_data.csv";
+  void handleAnswer(String answer, int index) {
+    associateList.add({
+      "number": index + 1,
+      "answer": answer,
+    });
+
+    debugPrint(associateList.toString()); // Optional: to see it in console
   }
 
-  Future<String> getAudioPath() async {
-    final dir = await getApplicationDocumentsDirectory();
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    return "${dir.path}/voice_sample_$timestamp.m4a";
-  }
+  // 📦 Export CSV using to_csv
+  void exportToCsv() {
+    // 1️⃣ Define header
+    List<String> header = ['No.', 'Answer'];
 
-  Future<void> saveToCsv(String answer, String audioPath) async {
-    final path = await getCsvPath();
-    final file = File(path);
+    // 2️⃣ Map associateList into List<List<String>>
+    List<List<String>> rows = associateList
+        .map((item) => [
+              item["number"].toString(),
+              item["answer"].toString(),
+            ])
+        .toList();
 
-    final exists = await file.exists();
-    final sink = file.openWrite(mode: FileMode.append);
-
-    if (!exists) {
-      sink.writeln("timestamp,answer,voice_sample_path");
-    }
-
-    final row = [
-      DateTime.now().toIso8601String(),
-      '"$answer"',
-      audioPath,
-    ];
-
-    sink.writeln(row.join(','));
-    await sink.flush();
-    await sink.close();
-
-    debugPrint("Saved to CSV: $path");
-  }
-
-  Future<void> handleAnswer(String answer, int index) async {
-    // Ask for mic permission
-    if (!await Permission.microphone.request().isGranted) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Microphone permission denied")),
-      );
-      return;
-    }
-
-    final audioPath = await getAudioPath();
-
-    // Start recording
-    if (await _record.hasPermission()) {
-      await _record.start(const RecordConfig(), path: audioPath);
-      setState(() => isRecording = true);
-
-      await Future.delayed(const Duration(seconds: 5));
-      await _record.stop();
-      setState(() => isRecording = false);
-
-      await saveToCsv(answer, audioPath);
-
-      // ✅ Add to associateList
-      associateList
-          .add({"number": index + 1, "answer": answer, "audioPath": audioPath});
-
-      debugPrint("associateList: $associateList");
-
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Saved answer and voice sample!")),
-      );
-    }
-  }
-
-  @override
-  void dispose() {
-    _record.dispose();
-    super.dispose();
+    // 3️⃣ Export
+    List<List<String>> csvData = [header, ...rows];
+    String csv = exportCSV.ListToCsvConverter().convert(csvData);
+    debugPrint(csv); // You can save or share this CSV string as needed
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Sleep Survey")),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              "How do you currently feel?",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            for (int i = 0; i < answers.length; i++)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: ElevatedButton(
-                  onPressed: () => handleAnswer(answers[i], i),
-                  child: Text(answers[i]),
-                ),
-              ),
-            const SizedBox(height: 20),
-            if (isRecording)
-              const Center(
-                child: Text(
-                  "Recording...",
-                  style: TextStyle(color: Colors.red),
-                ),
-              ),
-          ],
-        ),
+      appBar: AppBar(title: const Text('Survey')),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Center(child: Text('Survey Page UI goes here')),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: exportToCsv,
+            child: const Text('Export Answers to CSV'),
+          ),
+        ],
       ),
     );
   }
 }
+
+
