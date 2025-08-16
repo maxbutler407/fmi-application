@@ -1,7 +1,7 @@
 import "package:flutter/material.dart";
 import 'package:csv/csv.dart' as exportCSV;
 
-
+import 'google_sheets_service.dart';
 
 class SurveyPage extends StatefulWidget {
   const SurveyPage({super.key});
@@ -33,6 +33,9 @@ class SurveyPageState extends State<SurveyPage> {
     });
 
     debugPrint(associateList.toString()); // Optional: to see it in console
+
+    // send answer to Google Sheets logic file
+    sendAnswerToGoogleSheets(index + 1, answer);
   }
 
   // 📦 Export CSV using to_csv
@@ -50,7 +53,7 @@ class SurveyPageState extends State<SurveyPage> {
 
     // 3️⃣ Export
     List<List<String>> csvData = [header, ...rows];
-    String csv = exportCSV.ListToCsvConverter().convert(csvData);
+    String csv = const exportCSV.ListToCsvConverter().convert(csvData);
     debugPrint(csv); // You can save or share this CSV string as needed
   }
 
@@ -72,5 +75,6 @@ class SurveyPageState extends State<SurveyPage> {
     );
   }
 }
+
 
 
