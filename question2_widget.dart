@@ -1,5 +1,5 @@
 import "package:flutter/material.dart";
-import "question3_widget.dart";
+import "question_3.dart";
 
 class Question2Page extends StatefulWidget {
   const Question2Page({super.key, required this.title});
@@ -59,3 +59,4 @@ class _Question2Page extends State<Question2Page> {
     );
   }
 }
+
