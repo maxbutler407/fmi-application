@@ -1,0 +1,25 @@
+function doPost(e) {
+  try {
+    Logger.log("📥 Incoming POST request");
+    
+    // Log raw data
+    Logger.log("Raw postData: " + e.postData.contents);
+    
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    
+    var data = JSON.parse(e.postData.contents);
+    Logger.log("Parsed data: " + JSON.stringify(data));
+
+    // Append row: [number, answer, timestamp]
+    sheet.appendRow([data.number, data.answer, new Date()]);
+    Logger.log("✅ Row appended: " + data.number + " | " + data.answer);
+
+    return ContentService.createTextOutput("Success")
+      .setMimeType(ContentService.MimeType.TEXT);
+
+  } catch (err) {
+    Logger.log("❌ Error: " + err);
+    return ContentService.createTextOutput("Error: " + err)
+      .setMimeType(ContentService.MimeType.TEXT);
+  }
+}
